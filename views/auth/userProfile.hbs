@@ -1,0 +1,15 @@
+
+<div class="header">
+  <h1>
+    <h1>Hello {{username}} </h1>
+  </h1>
+
+<p>Username : {{username}}</p>
+<button type="button" class="btn btn-warning"><a href="/:{{userId}}/edit" style="color:white">Edit</a></button>
+<button type="button" class="btn btn-danger"><a href="/logout" style="color:white">Log Out</a></button>
+<br>
+{{#each users}}
+      <br>
+      <p>{{this.username}} - {{this.id}}</p>
+  {{/each}}
+</div>

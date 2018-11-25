@@ -1,39 +1,66 @@
-const express = require("express");
-const passport = require('passport');
-const router = express.Router();
-const User = require("../models/User");
+// AUTH.JS CONFIG
 
-// Bcrypt to encrypt passwords
-const bcrypt = require("bcrypt");
-const bcryptSalt = 10;
+const express        = require('express');
+const bcrypt         = require('bcrypt');
+const path           = require('path');
 
 
-router.get("/login", (req, res, next) => {
-  res.render("auth/login", { "message": req.flash("error") });
+const bcryptSalt     = 10;
+const passportRouter = express.Router();
+const bodyParser     = require('body-parser');
+const mongoose       = require('mongoose');
+const passport       = require('passport');
+const LocalStrategy  = require('passport-local').Strategy;
+
+const ensureLogin    = require('connect-ensure-login');
+const User           = require('../models/User');
+
+const router  = express.Router();
+
+// USER PROFILE ROUTE
+router.get('/user-profile', ensureLogin.ensureLoggedIn(), (req, res) => {
+  const userID    = req.user.id;
+  const username  = req.user.username;
+  User.find({})
+    .then((users) => {
+      res.render('auth/userProfile', {
+        users,  userId : req.user.id, username : req.user.username,
+      });
+    });
 });
 
-router.post("/login", passport.authenticate("local", {
-  successRedirect: "/",
-  failureRedirect: "/auth/login",
+
+// USER LOG IN ROUTES
+router.get('/login', (req, res, next) => {
+  res.render('auth/login', { message: req.flash('error') });
+});
+
+router.post('/login', passport.authenticate('local', {
+  successRedirect: '/',
+  failureRedirect: '/auth/login',
   failureFlash: true,
-  passReqToCallback: true
+  passReqToCallback: true,
 }));
 
-router.get("/signup", (req, res, next) => {
-  res.render("auth/signup");
+
+// USER SIGN UP ROUTES
+router.get('/signup', (req, res, next) => {
+  res.render('auth/signup');
 });
 
-router.post("/signup", (req, res, next) => {
+router.post('/signup', (req, res, next) => {
   const username = req.body.username;
+  console.log(username);
   const password = req.body.password;
-  if (username === "" || password === "") {
-    res.render("auth/signup", { message: "Indicate username and password" });
+  console.log(password);
+  if (username === '' || password === '') {
+    res.render('auth/signup', { message: 'Indicate username and password' });
     return;
   }
 
-  User.findOne({ username }, "username", (err, user) => {
+  User.findOne({ username }, 'username', (err, user) => {
     if (user !== null) {
-      res.render("auth/signup", { message: "The username already exists" });
+      res.render('auth/signup', { message: 'The username already exists' });
       return;
     }
 
@@ -42,22 +69,24 @@ router.post("/signup", (req, res, next) => {
 
     const newUser = new User({
       username,
-      password: hashPass
+      password: hashPass,
     });
 
     newUser.save()
-    .then(() => {
-      res.redirect("/");
-    })
-    .catch(err => {
-      res.render("auth/signup", { message: "Something went wrong" });
-    })
+      .then(() => {
+        res.redirect('/');
+      })
+      .catch((err) => {
+        res.render('auth/signup', { message: 'Something went wrong' });
+      });
   });
 });
 
-router.get("/logout", (req, res) => {
+
+// USER LOG OUT ROUTE
+router.get('/logout', (req, res) => {
   req.logout();
-  res.redirect("/");
+  res.redirect('/');
 });
 
 module.exports = router;
